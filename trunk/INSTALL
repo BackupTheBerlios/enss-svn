@@ -1,0 +1,59 @@
+1. Setup
+
+1.1. Setup from repository
+
+1.1.1. Initial checkout from SVN repository
+Go to a empty directory and run command:
+  svn checkout http://svn.berlios.de/enns/trunk
+  cd trunk
+  libtoolize --force --copy
+  aclocal --force
+  autoheader --force
+  autoconf --force
+  automake --foreign --force-missing --add-missing  --copy
+
+Note the project require libtool 2.x version and autoconf at least 2.62 version.
+
+1.2. Source tarbal (INPROGRES)
+Download enns source archive from ......
+
+  gunzip -c enns-XXX | tar xvf -
+  cd enns-XXX
+(TODO)
+
+2. Check available options
+Go to source directory created by prevoius step and run command:
+  ./configure --help
+
+3. Build and install
+  CPPFLAGS=-I<path_to_nss_headers> \
+  LDFLAGS=-L<path_to_nss_libraries> \
+  <path_to_soure_tree>/configure --prefix=/usr
+  make
+  make install (as root !)
+
+4. User configuration
+
+4.1. Sample OpenSSL engine configuration file
+=======================================================================
+#[ default ]
+openssl_conf = config
+
+[ config ]
+engines = engine_section
+
+[ engine_section ]
+engine = engine_conf
+
+[ engine_conf ]
+#dynamic_path = ${ENV::OPENSSL_ENGINES}/libe_nss.so
+#dynamic_path = /usr/lib/engines/libe_nss.so
+init = 1
+#DEBUG = 3
+## Note set CONFIG_DIR to Mozilla "User Profile" directory
+#CONFIG_DIR = ${ENV::HOME}/.mozilla/<APP>/<USERHASH>.default
+=======================================================================
+
+4.2. Test user configuration
+  OPENSSL_CONF=<path_to_openssl_configuration_file> \
+  openssl engine e_nss -t -post CONFIG_DIR:"<path_to_mozilla_profile_directory>" -post LIST_CERTS

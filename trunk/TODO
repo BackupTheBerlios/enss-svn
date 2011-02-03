@@ -1,0 +1,11 @@
+Todo:
+- autodetect OpenSSL engine directory
+- configuration with non standard OpenSSL instalation
+- autodetect NSS version, headers and libraries
+- support for DSA keys (DSA method)
+- regression tests
+- implement own methods to extract certificates stored into NSS database
+
+Planed:
+- implement STORE method to get a certificate
+- support for EC keys (EC method)

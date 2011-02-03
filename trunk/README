@@ -1,0 +1,9 @@
+e_nss(OpenSSL NSS engine)
+-------------------------
+ An OpenSSL engine(cryptographic module support) that use key and
+certificates stored in Mozilla NSS(Network Security Services)
+database.
+
+License: MIT/X Consortium (see the Copyright file).
+
+Roumen Petrov
