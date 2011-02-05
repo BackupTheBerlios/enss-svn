@@ -16,14 +16,21 @@ AC_CANONICAL_HOST
 LT_INIT([shared disable-static win32-dll])
 LT_LANG([Windows Resource])
 
+
 AC_PROG_CC
 AC_C_INLINE
+
 
 AC_ARG_ENABLE([tests],
   [AS_HELP_STRING([--enable-tests],
      [enable experimental regression tests @<:@default=no@:>@])],
   [],
   [enable_tests=no])
+
+AC_CHECK_PROGS([OPENSSL], [openssl], [false])
+AC_CHECK_PROGS([CERTUTIL], [certutil], [false])
+AC_CHECK_PROGS([PK12UTIL], [pk12util], [false])
+
 AM_CONDITIONAL([ENABLE_TESTS], [test "$enable_tests" = yes])
 
 

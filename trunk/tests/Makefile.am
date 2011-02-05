@@ -6,17 +6,16 @@ p12file = $(srcdir)/testid_rsa-dsa.p12
 p12passfile = $(srcdir)/p12passfile
 dbpassfile = $(srcdir)/nsspassfile
 
-OPENSSL = openssl
-p12pass = p12passfile
+OPENSSL = @OPENSSL@
+p12pass = file:$(srcdir)/p12passfile
 keypass = file:$(srcdir)/keypassfile
 engine_name = e_nss
 engine_in = -engine $(engine_name) -inform ENGINE
 engine_key = -engine $(engine_name) -keyform ENGINE
 
 
-nssroot = /work/OpenSSH/portable/.tests/ssh-nss/nss/3.12.7/nss-3.12.7/mozilla/dist/Linux2.6_x86_glibc_PTH_DBG.OBJ
-CERTUTIL = $(nssroot)/bin/certutil
-PK12UTIL = $(nssroot)/bin/pk12util
+CERTUTIL = @CERTUTIL@
+PK12UTIL = @PK12UTIL@
 certdir = nssdb
 
 
