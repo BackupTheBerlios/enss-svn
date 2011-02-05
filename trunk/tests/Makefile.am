@@ -1,4 +1,4 @@
-EXTRA_DIST = $(TESTS) \
+EXTRA_DIST = $(TESTS) $(p12file) \
  openssl.cnf keypassfile p12passfile nsspassfile
 
 p12file = $(srcdir)/testid_rsa-dsa.p12
@@ -35,7 +35,9 @@ print.test \
 list.test
 
 
+if ENABLE_TESTS
 $(TESTS): client-certificate.pem client-public.pem nssdb
+endif
 
 
 client-certificate.pem: $(p12file)
