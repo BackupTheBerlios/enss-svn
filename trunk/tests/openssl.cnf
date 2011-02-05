@@ -1,0 +1,31 @@
+#
+# OpenSSL test configuration file
+# Used only for NSS engine tests
+#
+
+#[ default ]
+openssl_conf = config
+
+[ config ]
+engines = engine_section
+
+[ engine_section ]
+engine1 = engine_nss
+#engine2 = engine_nss_097
+
+[ engine_nss ]
+dynamic_path = ${ENV::OPENSSL_ENGINES}/libe_nss.so
+#engine_id = e_nss
+#init = 1
+#DEBUG = 3
+#CONFIG_DIR = ${ENV::CONFIG_DIR}
+
+#[ engine_nss_097 ]
+# path has to be separated by native
+# "OS directory separator" !
+#dynamic_path = ${ENV::OPENSSL_LIBEXEC}/libe_nss.so
+#dynamic_path = ${ENV::OPENSSL_LIBEXEC}\\libe_nss.so
+#engine_id = e_nss
+#init = 1
+#DEBUG = 3
+#CONFIG_DIR = ${ENV::CONFIG_DIR}

@@ -1,0 +1,21 @@
+#! /bin/sh
+#
+# NSS Engine - test LIST_CERTS command
+#
+# This is free software; see Copyright file in the source
+# distribution for preciese wording.
+#
+# Copyright (C) 2011 Roumen Petrov
+#
+
+outfile=list.out
+
+cat /dev/null > $outfile
+
+OPENSSL_CONF=/dev/null \
+$OPENSSL engine $engine_name -t \
+ -post CONFIG_DIR:$CONFIG_DIR \
+ -post LIST_CERTS \
+> $outfile 2>&1
+
+grep '^\[Success\]: LIST_CERTS' $outfile > /dev/null

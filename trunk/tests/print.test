@@ -1,0 +1,23 @@
+#! /bin/sh
+#
+# NSS Engine - test PRINT_CERT command
+#
+# This is free software; see Copyright file in the source
+# distribution for preciese wording.
+#
+# Copyright (C) 2011 Roumen Petrov
+#
+
+nickname='OpenSSH RSA test certificate(dsa) - OpenSSH Test Team cyrillic-АБВГабвг greek-ΑΒΓΔαβγδ'
+
+outfile=print.out
+
+cat /dev/null > $outfile
+
+OPENSSL_CONF=/dev/null \
+$OPENSSL engine $engine_name -t \
+ -post CONFIG_DIR:$CONFIG_DIR \
+ -post PRINT_CERT:"$nickname" \
+> $outfile 2>&1
+
+grep '^\[Success\]: PRINT_CERT:' $outfile > /dev/null

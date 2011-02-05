@@ -278,8 +278,7 @@ nss_finish(ENGINE *e) {
         SECStatus  rv;
 
         rv = NSS_Shutdown();
-        //if (rv != SECSuccess) 
-{
+        if (rv != SECSuccess) {
             NSSerr(NSS_F_FINISH, NSS_R_SHUTDOWN_FAIL);
         }
     }
@@ -448,11 +447,12 @@ nss_vtrace(NSS_CTX *ctx, int level, char *fmt, va_list ap) {
     if (ctx == NULL) return;
     if (ctx->debug_level < level) return;
 
-
     if (ctx->error_file)
         err = BIO_new_file(ctx->error_file, "a+");
     else
         err = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+    if (!err) return;
 
     switch (level) {
     case NSS_LOGLEVEL_VERBOSE: BIO_puts(err, "INFO["); break;

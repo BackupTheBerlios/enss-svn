@@ -1,5 +1,8 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . engines
+if ENABLE_TESTS
+  TEST_SUBDIR = tests
+endif
+SUBDIRS = . engines $(TEST_SUBDIR)
 
 dist_doc_DATA = AUTHORS Copyright INSTALL README TODO

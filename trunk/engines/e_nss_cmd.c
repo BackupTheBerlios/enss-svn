@@ -126,7 +126,10 @@ nss_cmd_print_cert(NSS_CTX *ctx, const char *s) {
         goto done;
     }
 
+    nss_debug(ctx, "print_cert  search for '%s'", s);
     cert = PK11_FindCertFromNickname(s, NULL);
+    nss_debug(ctx, "print_cert  found cert='%p'", cert);
+
     if (cert == NULL) goto done;
 
     {/*convert CERTCertificate to X509*/

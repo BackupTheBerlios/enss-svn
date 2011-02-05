@@ -1,0 +1,18 @@
+#! /bin/sh
+#
+# NSS Engine - show test environment
+#
+# This is free software; see Copyright file in the source
+# distribution for preciese wording.
+#
+# Copyright (C) 2011 Roumen Petrov
+#
+
+echo "=== test environment ==="
+echo SHELL=$SHELL
+echo CONFIG_SHELL=$CONFIG_SHELL
+echo OPENSSL=$OPENSSL
+echo OPENSSL_CONF=$OPENSSL_CONF
+echo OPENSSL_ENGINES=$OPENSSL_ENGINES
+echo CONFIG_DIR=$CONFIG_DIR
+echo engine_name=$engine_name

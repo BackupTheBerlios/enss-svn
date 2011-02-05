@@ -8,7 +8,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.11 foreign dist-bzip2
+                  color-tests -Wall -Werror])
 
 AC_CANONICAL_HOST
 
@@ -16,6 +17,17 @@ LT_INIT([shared disable-static win32-dll])
 LT_LANG([Windows Resource])
 
 AC_PROG_CC
+AC_C_INLINE
+
+AC_ARG_ENABLE([tests],
+  [AS_HELP_STRING([--enable-tests],
+     [enable experimental regression tests @<:@default=no@:>@])],
+  [],
+  [enable_tests=no])
+AM_CONDITIONAL([ENABLE_TESTS], [test "$enable_tests" = yes])
+
 
 AC_CONFIG_FILES([Makefile engines/Makefile])
+AC_CONFIG_FILES([tests/Makefile])
+
 AC_OUTPUT
