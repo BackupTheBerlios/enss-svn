@@ -14,7 +14,7 @@ nss_load_key(ENGINE *e, const char *key_id, int private, NSS_UI *wincx) {
     SECKEYPrivateKey *pvtkey = NULL;
     SECKEYPublicKey  *pubkey = NULL;
     EVP_PKEY         *pkey = NULL;
-    RSA              *rsa = NULL;
+    NSS_KEYCTX       *keyctx = NULL;
 
     ctx = ENGINE_get_ex_data(e, nss_eng_ctx_index);
     nss_verbose(ctx, "nss_load_key(): private=%d, key_id='%s'\n", private, key_id);
@@ -65,8 +65,15 @@ nss_load_key(ENGINE *e, const char *key_id, int private, NSS_UI *wincx) {
 
 {
     long l = si_pubkey->len;
-    void *q = OPENSSL_malloc(l);
-    const unsigned char *p = q; /*use another pointer to avoid crash ;)*/
+    void *q;
+    const unsigned char *p;
+
+    q = OPENSSL_malloc(l);
+    if (q == NULL) {
+        NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+        goto pubkeydone;
+    }
+    p = q; /*use another pointer to avoid crash ;)*/
 
     memcpy(q, si_pubkey->data, l);
     nss_trace(ctx, "nss_load_key(): q=%p\n", q);
@@ -84,11 +91,42 @@ pubkeydone:
 
     if (pkey == NULL) goto done;
 
-    /* avoid errors as first check for key type*/
+    /* avoid errors as first check for key type */
     switch (pkey->type) {
     case EVP_PKEY_RSA: {
-        rsa = EVP_PKEY_get1_RSA(pkey);
+        RSA *pkey_rsa = EVP_PKEY_get1_RSA(pkey);
+
+        if (ENGINE_get_RSA(e) == RSA_get_method(pkey_rsa)) {
+            RSA_free(pkey_rsa);
+            break;
+        }
+
+        /* if rsa method is not associated with this engine ... */
+        {
+            RSA *rsa = RSA_new_method(e);
+
+            if (rsa == NULL) {
+                    NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+                    goto rsa_done;
+            }
+
+            rsa->n = BN_dup(pkey_rsa->n);
+            rsa->e = BN_dup(pkey_rsa->e);
+            if ((rsa->n == NULL) || (rsa->e == NULL)) {
+                    NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+                    goto rsa_done;
+            }
+
+            if (EVP_PKEY_set1_RSA(pkey, rsa)) {
+                keyctx = RSA_get_ex_data(rsa, nss_rsa_ctx_index);
+            }
+rsa_done:
+            RSA_free(rsa);
+        }
+
+        RSA_free(pkey_rsa);
         } break;
+
     default: {
         NSSerr(NSS_F_LOAD_KEY, NSS_R_UNSUPPORTED_KEYTYPE);
         { /* add extra error message data */
@@ -102,30 +140,19 @@ pubkeydone:
     }
 
     /* update XXX key context*/
-    if (rsa != NULL) {
-        NSS_KEYCTX *keyctx;
-
-        keyctx = RSA_get_ex_data(rsa, nss_rsa_ctx_index);
-        nss_trace(ctx, "nss_load_key(): keyctx=%p\n", keyctx);
-        if (keyctx == NULL) {
-            NSSerr(NSS_F_LOAD_KEY, NSS_R_MISSING_KEY_CONTEXT);
-            goto done;
-        }
-
-        keyctx->cert = cert;
-        cert = NULL;
-        keyctx->pvtkey = pvtkey;
-        pvtkey = NULL;
-        keyctx->pubkey = pubkey;
-        pubkey = NULL;
+    if (keyctx == NULL) {
+        NSSerr(NSS_F_LOAD_KEY, NSS_R_MISSING_KEY_CONTEXT);
+        goto done;
     }
 
+    keyctx->cert = cert;
+    cert = NULL;
+    keyctx->pvtkey = pvtkey;
+    pvtkey = NULL;
+    keyctx->pubkey = pubkey;
+    pubkey = NULL;
 
 done:
-    if (rsa) {
-        RSA_free(rsa);
-        rsa = NULL;
-    }
     if (pubkey) {
         SECKEY_DestroyPublicKey(pubkey);
         pubkey = NULL;
