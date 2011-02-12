@@ -50,9 +50,6 @@ nss_load_key(ENGINE *e, const char *key_id, int private, NSS_UI *wincx) {
         goto done;
     }
 
-#if 1
-#  define USE_GENERIC
-#endif
 {
     SECItem* si_pubkey = PK11_DEREncodePublicKey(pubkey);
 
@@ -66,7 +63,6 @@ nss_load_key(ENGINE *e, const char *key_id, int private, NSS_UI *wincx) {
         goto pubkeydone;
     }
 
-#ifdef USE_GENERIC
 {
     long l = si_pubkey->len;
     void *q = OPENSSL_malloc(l);
@@ -80,33 +76,13 @@ nss_load_key(ENGINE *e, const char *key_id, int private, NSS_UI *wincx) {
 
     OPENSSL_free(q);
 }
-#else
-{/* convert NSS public key to OpenSSL RSA key */
-    const unsigned char *q = si_pubkey->data;
-    rsa = d2i_RSA_PUBKEY(NULL, &q, si_pubkey->len);
-    nss_trace(ctx, "nss_load_key(): rsa=%p\n", rsa);
-}
-#endif
 
 pubkeydone:
     if (si_pubkey)
         SECITEM_FreeItem(si_pubkey, PR_TRUE);
 }
 
-
-#ifdef USE_GENERIC
-    if (pkey == NULL)
-        goto done;
-#else
-    if (rsa == NULL)
-        goto done;
-
-    pkey = EVP_PKEY_new();
-    if (pkey == NULL) {
-        NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
-        goto done;
-    }
-#endif
+    if (pkey == NULL) goto done;
 
     /* avoid errors as first check for key type*/
     switch (pkey->type) {
@@ -142,10 +118,6 @@ pubkeydone:
         pvtkey = NULL;
         keyctx->pubkey = pubkey;
         pubkey = NULL;
-
-    #ifndef USE_GENERIC
-        EVP_PKEY_set1_RSA(pkey, rsa);
-    #endif
     }
 
 
