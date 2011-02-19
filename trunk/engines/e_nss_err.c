@@ -24,6 +24,7 @@
 #define NSS_F_RSA_VERIFY				 125
 #define NSS_F_DSA_INIT					 130
 #define NSS_F_DSA_FINISH				 131
+#define NSS_F_DSA_DO_SIGN				 132
 
 /* Reasons */
 #define NSS_R_INSUFFICIENT_MEMORY			 100
@@ -51,11 +52,13 @@
 #define NSS_R_DERENCODE_PUBKEY				 134
 #define NSS_R_DERENCODE_PUBKEYBUF			 135
 
-#define NSS_R_BAD_SIGNATURE				 140
-#define NSS_R_DECRYPT_FAIL				 141
-#define NSS_R_SIGN_DIGEST_FAIL				 142
-#define NSS_R_VERIFY_DIGEST_FAIL			 143
+#define NSS_R_DECRYPT_FAIL				 140
+#define NSS_R_SGN_DIGEST_FAIL				 141
+#define NSS_R_VERIFY_DIGEST_FAIL			 142
 
+#define NSS_R_BAD_SIGNATURE				 150
+#define NSS_R_INVALID_DIGEST_LENGTH			 151
+#define NSS_R_INVALID_SIGNATURE_LENGTH			 152
 
 #ifndef OPENSSL_NO_ERR
 
@@ -77,6 +80,7 @@ NSS_str_functs[] = {
     { ERR_FUNC(NSS_F_RSA_VERIFY)	, "RSA_VERIFY" },
     { ERR_FUNC(NSS_F_DSA_INIT)		, "DSA_INIT" },
     { ERR_FUNC(NSS_F_DSA_FINISH)	, "DSA_FINISH" },
+    { ERR_FUNC(NSS_F_DSA_DO_SIGN)	, "DSA_DO_SIGN" },
     {0,  NULL}
 };
 
@@ -110,10 +114,13 @@ NSS_str_reasons[] = {
     { ERR_REASON(NSS_R_DERENCODE_PUBKEY)	, "Derencode pubkey" },
     { ERR_REASON(NSS_R_DERENCODE_PUBKEYBUF)	, "Derencode pubkeybuf" },
 
-    { ERR_REASON(NSS_R_BAD_SIGNATURE)		, "Bad Signature" },
     { ERR_REASON(NSS_R_DECRYPT_FAIL)		, "Decrypt fail" },
-    { ERR_REASON(NSS_R_SIGN_DIGEST_FAIL)	, "Sign digest fail" },
-    { ERR_REASON(NSS_R_VERIFY_DIGEST_FAIL)	, "Verify digest fail" },
+    { ERR_REASON(NSS_R_SGN_DIGEST_FAIL)		, "SGN_Digest fail" },
+    { ERR_REASON(NSS_R_VERIFY_DIGEST_FAIL)	, "VFY_VerifyDigest fail" },
+
+    { ERR_REASON(NSS_R_BAD_SIGNATURE)		, "Bad signature" },
+    { ERR_REASON(NSS_R_INVALID_DIGEST_LENGTH)	, "Invalid digest length" },
+    { ERR_REASON(NSS_R_INVALID_SIGNATURE_LENGTH), "Invalid signature length" },
     { 0, NULL}
 };
 

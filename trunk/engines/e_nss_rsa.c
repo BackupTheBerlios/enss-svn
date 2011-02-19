@@ -198,7 +198,7 @@ extern SECStatus SEC_SignData(SECItem *result,
             int port_err_off = port_err - SEC_ERROR_BASE;
 
             nss_trace(ctx, "nss_rsa_sign() port_err/ofset=%d/%d\n", port_err, port_err_off);
-            NSSerr(NSS_F_RSA_SIGN, NSS_R_SIGN_DIGEST_FAIL);
+            NSSerr(NSS_F_RSA_SIGN, NSS_R_SGN_DIGEST_FAIL);
             {/*add extra error message data*/
                 char msgstr[10];
                 BIO_snprintf(msgstr, sizeof(msgstr), "%d", port_err_off);

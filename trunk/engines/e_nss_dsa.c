@@ -10,7 +10,84 @@
 #ifndef OPENSSL_NO_DSA
 static DSA_SIG*
 nss_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa) {
-    return(NULL);
+    DSA_SIG*    ret = NULL;
+    SECStatus   rv;
+    NSS_CTX    *ctx;
+    NSS_KEYCTX *keyctx;
+
+    ctx = ENGINE_get_ex_data(dsa->engine, nss_eng_ctx_index);
+    nss_trace(ctx, "nss_dsa_do_sign(dgst=%d, dlen=%d, ...)\n", dgst, dlen);
+
+    keyctx = DSA_get_ex_data(dsa, nss_dsa_ctx_index);
+    nss_trace(ctx, "nss_dsa_do_sign() keyctx=%p\n", keyctx);
+    if (keyctx == NULL) {
+        NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_MISSING_KEY_CONTEXT);
+        goto done;
+    }
+
+    nss_trace(ctx, "nss_dsa_do_sign() keyctx->prvkey=%p\n", keyctx->pvtkey);
+    if (keyctx->pvtkey == NULL) {
+        NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_MISSING_PVTKEY);
+        goto done;
+    }
+
+    if (dlen != 20) {
+        NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_INVALID_DIGEST_LENGTH);
+        goto done;
+    }
+
+    nss_trace(ctx, "nss_dsa_do_sign() keyctx->pvtkey->keyType=%d\n", keyctx->pvtkey->keyType);
+{
+    SECItem    digest = { siBuffer, (unsigned char*)dgst, dlen };
+    SECItem    result = { siBuffer, NULL, 0 };
+    SECOidTag  hashalg /*= SEC_OID_SHA1 unused*/;
+
+    rv = SGN_Digest(keyctx->pvtkey, hashalg, &result, &digest);
+    nss_trace(ctx, "nss_dsa_do_sign() rv=%d\n", rv);
+    if (rv != SECSuccess) {
+        int port_err = PORT_GetError();
+        switch(port_err) {
+        default: {
+            int port_err_off = port_err - SEC_ERROR_BASE;
+
+            nss_trace(ctx, "nss_dsa_do_sign() port_err/ofset=%d/%d\n", port_err, port_err_off);
+            NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_SGN_DIGEST_FAIL);
+            {/*add extra error message data*/
+                char msgstr[10];
+                BIO_snprintf(msgstr, sizeof(msgstr), "%d", port_err_off);
+                ERR_add_error_data(2, "PORT_ERROR_OFFSET=", msgstr);
+            }
+            } break;
+        }
+        goto done;
+    }
+
+
+    /* propagate result */
+    nss_trace(ctx, "nss_dsa_do_sign() result.len=%d\n", result.len);
+    if (result.len != 40) {
+        NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_INVALID_SIGNATURE_LENGTH);
+        goto done;
+    }
+
+    ret = DSA_SIG_new();
+    if (ret == NULL) {
+        NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_INSUFFICIENT_MEMORY);
+        goto done;
+    }
+
+    ret->r = BN_bin2bn(result.data   , 20, NULL);
+    ret->s = BN_bin2bn(result.data+20, 20, NULL);
+    if ((ret->r == NULL) || (ret->s == NULL)) {
+        NSSerr(NSS_F_DSA_DO_SIGN, NSS_R_INSUFFICIENT_MEMORY);
+        DSA_SIG_free(ret);
+        ret = NULL;
+    }
+    OPENSSL_cleanse(result.data, 40);
+}
+
+done:
+    return(ret);
 }
 
 
