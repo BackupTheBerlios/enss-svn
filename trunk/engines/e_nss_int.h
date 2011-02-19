@@ -20,7 +20,7 @@ extern "C" {
 
 #define NSS_LIB_NAME		"E_NSS"
 #define NSS_ENG_NAME		"NSS engine support"
-#define NSS_ENG_VERSION		"0.1.2"
+#define NSS_ENG_VERSION		"0.2"
 
 
 #define NSS_LOGLEVEL_VERBOSE	1
