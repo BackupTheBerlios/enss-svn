@@ -244,9 +244,11 @@ nss_init(ENGINE *e) {
         NSSerr(NSS_F_INIT, NSS_R_ENG_CTX_INDEX);
         goto done;
     }
+    CALL_TRACE("nss_init() nss_eng_ctx_index=%d\n", nss_eng_ctx_index);
 
     /* ensure RSA context index */
-    nss_rsa_ctx_index = RSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+    if (nss_rsa_ctx_index < 0)
+        nss_rsa_ctx_index = RSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
     CALL_TRACE("nss_init() nss_rsa_ctx_index=%d\n", nss_rsa_ctx_index);
     if (nss_rsa_ctx_index < 0) {
         NSSerr(NSS_F_INIT, NSS_R_RSA_CTX_INDEX);
@@ -254,7 +256,8 @@ nss_init(ENGINE *e) {
     }
 
     /* ensure DSA context index */
-    nss_dsa_ctx_index = DSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+    if (nss_dsa_ctx_index < 0)
+        nss_dsa_ctx_index = DSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
     CALL_TRACE("nss_init() nss_dsa_ctx_index=%d\n", nss_dsa_ctx_index);
     if (nss_dsa_ctx_index < 0) {
         NSSerr(NSS_F_INIT, NSS_R_DSA_CTX_INDEX);
