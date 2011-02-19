@@ -162,10 +162,8 @@ bind_nss_dsa_method(ENGINE *e) {
     nss_dsa_method.dsa_mod_exp = dsa_method->dsa_mod_exp;
     nss_dsa_method.bn_mod_exp  = dsa_method->bn_mod_exp;
 
-#if 0 /* not yet */
     if (!ENGINE_set_DSA(e, &nss_dsa_method))
         return(0);
-#endif
     return(1);
 }
 #endif /*ndef OPENSSL_NO_DSA*/
