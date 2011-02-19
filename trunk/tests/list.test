@@ -15,7 +15,7 @@ cat /dev/null > $outfile
 OPENSSL_CONF=/dev/null \
 $OPENSSL engine $engine_name -t \
  -post CONFIG_DIR:$CONFIG_DIR \
- -post LIST_CERTS \
+ -post LIST_CERTS:1 \
 > $outfile 2>&1
 
 grep '^\[Success\]: LIST_CERTS' $outfile > /dev/null

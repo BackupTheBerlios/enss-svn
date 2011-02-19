@@ -58,7 +58,7 @@ done:
 
 
 static int
-nss_cmd_list_cert(NSS_CTX *ctx, const char *s) {
+nss_cmd_list_cert(NSS_CTX *ctx, long i) {
     int ret = 0;
     BIO  *out = NULL;
     void *wincx = NULL;
@@ -67,7 +67,7 @@ nss_cmd_list_cert(NSS_CTX *ctx, const char *s) {
     CERTCertListNode *node;
     PK11CertListType  type;
 
-    CALL_TRACE("nss_cmd_list_cert...\n");
+    CALL_TRACE("nss_cmd_list_cert: %ld\n", i);
 
     if (ctx == NULL) {
         NSSerr(NSS_F_CMD_LIST_CERT, NSS_R_INVALID_ARGUMENT);
@@ -78,8 +78,6 @@ nss_cmd_list_cert(NSS_CTX *ctx, const char *s) {
         goto done;
     }
 
-    out = BIO_new_fp(stdout, BIO_NOCLOSE);
-
 #if 0
 softoken/secmodt.h:     PK11CertListUnique = 0,     /* get one instance of all certs */
 softoken/secmodt.h:     PK11CertListUser = 1,       /* get all instances of user certs */
@@ -89,8 +87,17 @@ softoken/secmodt.h:     PK11CertListCAUnique = 4,   /* get one instance of CA ce
 softoken/secmodt.h:     PK11CertListUserUnique = 5, /* get one instance of user certs */
 softoken/secmodt.h:     PK11CertListAll = 6         /* get all instances of all certs */
 #endif
+    switch (i) {
+    case 1: type = PK11CertListUser; break;
+    case 2: type = PK11CertListCA  ; break;
+    case 3: type = PK11CertListAll ; break;
+    default:
+        goto done;
+        break;
+    }
 
-    type = PK11CertListUser;
+    out = BIO_new_fp(stdout, BIO_NOCLOSE);
+
     list = PK11_ListCerts(type, wincx);
     for (node = CERT_LIST_HEAD(list);
          !CERT_LIST_END(node, list);
@@ -213,11 +220,11 @@ static const ENGINE_CMD_DEFN nss_cmd_defns[] = {
      ENGINE_CMD_FLAG_STRING},
     {E_NSS_CMD_LIST_CERTS,
      "LIST_CERTS",
-     "....",
-     ENGINE_CMD_FLAG_NO_INPUT},
+     "List certificates (1=User, 2=CA, 3=All)",
+     ENGINE_CMD_FLAG_NUMERIC},
     {E_NSS_CMD_PRINT_CERT,
      "PRINT_CERT",
-     "....",
+     "Search and print certificate by specified nickname",
      ENGINE_CMD_FLAG_STRING},
     {0, NULL, NULL, 0}
 };
@@ -264,7 +271,7 @@ nss_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()) {
         ret = 1;
         } break;
     case E_NSS_CMD_LIST_CERTS: {
-        ret = nss_cmd_list_cert(ctx, NULL);
+        ret = nss_cmd_list_cert(ctx, i);
         } break;
     case E_NSS_CMD_PRINT_CERT: {
         ret = nss_cmd_print_cert(ctx, (char*) p);
