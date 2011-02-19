@@ -52,6 +52,10 @@ nss_openssl_pass_func(PK11SlotInfo *slot, UI_METHOD *ui_method, void *callback_d
 
         CALL_TRACE("nss_openssl_pass_func() prompt = %s\n", prompt);
 
+    #if 0 /* not yet */
+        UI_add_info_string(ui, PK11_GetSlotName (slot));
+    #endif
+
         ok = UI_add_input_string(ui, prompt, ui_flags, buf1, min_len, max_len - 1);
         if (ok < 0) goto passdone;
 

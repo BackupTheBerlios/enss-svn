@@ -123,6 +123,7 @@ nss_rsa_sign(int dtype, const unsigned char *m, unsigned int m_length, unsigned 
 
     ctx = ENGINE_get_ex_data(rsa->engine, nss_eng_ctx_index);
     nss_trace(ctx, "nss_rsa_sign(dtype=%d, m=%p, m_length=%d, ...)\n", dtype, m, m_length);
+    nss_trace(ctx, "nss_rsa_sign() rsa=%p, meth=%p, name=%s\n", rsa, rsa->meth, rsa->meth->name);
 
     keyctx = RSA_get_ex_data(rsa, nss_rsa_ctx_index);
     nss_trace(ctx, "nss_rsa_sign() keyctx=%p\n", keyctx);
@@ -239,6 +240,7 @@ nss_rsa_verify(int dtype, const unsigned char *m, unsigned int m_length, const u
 
     ctx = ENGINE_get_ex_data(rsa->engine, nss_eng_ctx_index);
     nss_trace(ctx, "nss_rsa_verify(dtype=%d, ...)\n", dtype);
+    nss_trace(ctx, "nss_rsa_verify() rsa=%p, meth=%p, name=%s\n", rsa, rsa->meth, rsa->meth->name);
 
     keyctx = RSA_get_ex_data(rsa, nss_rsa_ctx_index);
     nss_trace(ctx, "nss_rsa_verify() keyctx=%p\n", keyctx);

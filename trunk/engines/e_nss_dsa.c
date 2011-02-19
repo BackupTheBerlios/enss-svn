@@ -17,6 +17,7 @@ nss_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa) {
 
     ctx = ENGINE_get_ex_data(dsa->engine, nss_eng_ctx_index);
     nss_trace(ctx, "nss_dsa_do_sign(dgst=%d, dlen=%d, ...)\n", dgst, dlen);
+    nss_trace(ctx, "nss_dsa_do_sign() dsa=%p, meth=%p, name=%s\n", dsa, dsa->meth, dsa->meth->name);
 
     keyctx = DSA_get_ex_data(dsa, nss_dsa_ctx_index);
     nss_trace(ctx, "nss_dsa_do_sign() keyctx=%p\n", keyctx);

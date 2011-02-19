@@ -127,6 +127,43 @@ rsa_done:
         RSA_free(pkey_rsa);
         } break;
 
+    case EVP_PKEY_DSA: {
+        DSA *pkey_dsa = EVP_PKEY_get1_DSA(pkey);
+
+        if (ENGINE_get_DSA(e) == pkey_dsa->meth) {
+            DSA_free(pkey_dsa);
+            break;
+        }
+
+        /* if dsa method is not associated with this engine ... */
+        {
+            DSA *dsa = DSA_new_method(e);
+
+            if (dsa == NULL) {
+                NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+                goto dsa_done;
+            }
+
+            dsa->p = BN_dup(pkey_dsa->p);
+            dsa->q = BN_dup(pkey_dsa->q);
+            dsa->g = BN_dup(pkey_dsa->g);
+            dsa->pub_key = BN_dup(pkey_dsa->pub_key);
+
+            if ((dsa->p == NULL) || (dsa->q == NULL) || (dsa->g == NULL) || (dsa->pub_key == NULL)) {
+                NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+                goto dsa_done;
+            }
+
+            if (EVP_PKEY_set1_DSA(pkey, dsa)) {
+                keyctx = DSA_get_ex_data(dsa, nss_dsa_ctx_index);
+            }
+dsa_done:
+            DSA_free(dsa);
+        }
+
+        DSA_free(pkey_dsa);
+        } break;
+
     default: {
         NSSerr(NSS_F_LOAD_KEY, NSS_R_UNSUPPORTED_KEYTYPE);
         { /* add extra error message data */
