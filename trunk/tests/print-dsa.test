@@ -8,9 +8,9 @@
 # Copyright (C) 2011 Roumen Petrov
 #
 
-nickname='OpenSSH RSA test certificate(dsa) - OpenSSH Test Team cyrillic-АБВГабвг greek-ΑΒΓΔαβγδ'
+nickname='OpenSSH DSA test certificate(dsa) - OpenSSH Test Team cyrillic-АБВГабвг greek-ΑΒΓΔαβγδ'
 
-outfile=print.out
+outfile=print-dsa.out
 
 cat /dev/null > $outfile
 

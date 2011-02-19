@@ -1,7 +1,8 @@
-EXTRA_DIST = $(TESTS) $(p12file) \
+EXTRA_DIST = $(TESTS) $(p12rsafile) $(p12dsafile) \
  openssl.cnf keypassfile p12passfile nsspassfile
 
-p12file = $(srcdir)/testid_rsa-dsa.p12
+p12rsafile = $(srcdir)/testid_rsa-dsa.p12
+p12dsafile = $(srcdir)/testid_dsa-dsa.p12
 
 p12passfile = $(srcdir)/p12passfile
 dbpassfile = $(srcdir)/nsspassfile
@@ -31,7 +32,8 @@ engine_name=$(engine_name)
 TESTS = \
 echo.test \
 engine.test \
-print.test \
+print-rsa.test \
+print-dsa.test \
 list.test
 
 
@@ -40,8 +42,8 @@ $(TESTS): client-certificate.pem client-public.pem nssdb
 endif
 
 
-client-certificate.pem: $(p12file)
-	$(OPENSSL) pkcs12 -clcerts -in $(p12file) -nokeys \
+client-certificate.pem: $(p12rsafile)
+	$(OPENSSL) pkcs12 -clcerts -in $(p12rsafile) -nokeys \
 	  -passin $(p12pass) > $@.tmp || rm $@.tmp
 	test -f $@.tmp && \
 	$(OPENSSL) x509 -in $@.tmp -text -nameopt RFC2253 \
@@ -55,8 +57,8 @@ client-public.pem: client-private.pem
 	  > $@.tmp || rm $@.tmp
 	@test -f $@.tmp && mv $@.tmp $@
 
-client-private.pem: $(p12file)
-	$(OPENSSL) pkcs12 -clcerts -in $(p12file) -nocerts \
+client-private.pem: $(p12rsafile)
+	$(OPENSSL) pkcs12 -clcerts -in $(p12rsafile) -nocerts \
 	  -passin $(p12pass) -passout $(keypass) \
 	  > $@.tmp || rm $@.tmp
 	@test -f $@.tmp && mv $@.tmp $@
@@ -64,11 +66,12 @@ client-private.pem: $(p12file)
 
 nssdb: $(certdir)/cert8.db
 
-$(certdir)/cert8.db: $(p12file)
+$(certdir)/cert8.db: $(p12rsafile) $(p12dsafile)
 	rm -f $(certdir)/*.db
 	@test -d $(certdir) || mkdir $(certdir)
 	$(CERTUTIL) -N -d $(certdir) -f $(dbpassfile)
-	$(PK12UTIL) -i $(p12file) -d $(certdir) -k $(dbpassfile) -w $(p12passfile)
+	$(PK12UTIL) -i $(p12rsafile) -d $(certdir) -k $(dbpassfile) -w $(p12passfile)
+	$(PK12UTIL) -i $(p12dsafile) -d $(certdir) -k $(dbpassfile) -w $(p12passfile)
 	$(CERTUTIL) -L -d $(certdir)
 
 
