@@ -181,6 +181,7 @@ CRYPTO_EX_NSS_CTX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx, lon
  */
 static int nss_eng_ctx_index = -1;
 static int nss_rsa_ctx_index = -1;
+static int nss_dsa_ctx_index = -1;
 
 
 /*
@@ -195,6 +196,7 @@ static const char *nss_engine_name = NSS_ENG_NAME " (" NSS_ENG_VERSION ")";
 #include "e_nss_ui.c"
 #include "e_nss_key.c"
 #include "e_nss_rsa.c"
+#include "e_nss_dsa.c"
 #include "e_nss_store.c"
 
 
@@ -248,6 +250,14 @@ nss_init(ENGINE *e) {
     CALL_TRACE("nss_init() nss_rsa_ctx_index=%d\n", nss_rsa_ctx_index);
     if (nss_rsa_ctx_index < 0) {
         NSSerr(NSS_F_INIT, NSS_R_RSA_CTX_INDEX);
+        goto done;
+    }
+
+    /* ensure DSA context index */
+    nss_dsa_ctx_index = DSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+    CALL_TRACE("nss_init() nss_dsa_ctx_index=%d\n", nss_dsa_ctx_index);
+    if (nss_dsa_ctx_index < 0) {
+        NSSerr(NSS_F_INIT, NSS_R_DSA_CTX_INDEX);
         goto done;
     }
 
@@ -335,6 +345,11 @@ bind_nss(ENGINE *e) {
 
 #ifndef OPENSSL_NO_RSA
     if (!bind_nss_rsa_method(e))
+        return(0);
+#endif
+
+#ifndef OPENSSL_NO_DSA
+    if (!bind_nss_dsa_method(e))
         return(0);
 #endif
 

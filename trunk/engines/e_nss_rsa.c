@@ -356,7 +356,7 @@ nss_rsa_method = {
     0 ,
     NULL /* char *app_data; */,
     nss_rsa_sign,
-    0,//nss_rsa_verify,
+    nss_rsa_verify,
     NULL /*rsa_keygen*/
 };
 

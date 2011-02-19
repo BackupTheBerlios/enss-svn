@@ -1,5 +1,13 @@
 #ifndef HEADER_NSS_INT_H
 #define HEADER_NSS_INT_H
+/**
+ * NSS Engine - internals
+ *
+ * This is free software; see Copyright file in the source
+ * distribution for preciese wording.
+ *
+ * Copyright (C) 2011 Roumen Petrov
+ */
 
 #include <nss/pk11pub.h>
 #include <openssl/ossl_typ.h>
