@@ -12,6 +12,8 @@ nss_cmd_nss_config_dir(NSS_CTX *ctx, const char *s) {
     int        ret = 0;
     SECStatus  rv;
 
+    CALL_TRACE("nss_cmd_nss_config_dir...\n");
+
     if (ctx == NULL) {
         NSSerr(NSS_F_CMD_CONFIG_DIR, NSS_R_INVALID_ARGUMENT);
         goto done;
@@ -21,9 +23,9 @@ nss_cmd_nss_config_dir(NSS_CTX *ctx, const char *s) {
         goto done;
     }
 
+    nss_trace(ctx, "nss_cmd_nss_config_dir('%s')\n", s);
     if (ctx->config_dir != NULL) {
-#if 0
-        //TODO: once set we may not change until restart of engine
+#if 0 /*TODO: once set we may not change until restart of engine*/
         OPENSSL_free(nss_config_dir);
         nss_config_dir = NULL;
 #endif
@@ -226,7 +228,8 @@ nss_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()) {
     int ret = 0;
     NSS_CTX *ctx;
 
-CALL_TRACE("nss_ctrl() cmd=%d\n", cmd);
+    CALL_TRACE("nss_ctrl() cmd=%d\n", cmd);
+
 /* Put commands that do not require initialisation here*/
     switch (cmd) {
 #ifdef CMD_SO_PATH
