@@ -97,30 +97,28 @@ pubkeydone:
         RSA *pkey_rsa = EVP_PKEY_get1_RSA(pkey);
 
         if (ENGINE_get_RSA(e) == RSA_get_method(pkey_rsa)) {
-            RSA_free(pkey_rsa);
-            break;
-        }
-
-        /* if rsa method is not associated with this engine ... */
-        {
+            keyctx = RSA_get_ex_data(pkey_rsa, nss_rsa_ctx_index);
+        } else {
+            /* if rsa method is not associated with this engine ... */
             RSA *rsa = RSA_new_method(e);
 
             if (rsa == NULL) {
-                    NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
-                    goto rsa_done;
+                NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+                goto rsa_done;
             }
 
             rsa->n = BN_dup(pkey_rsa->n);
             rsa->e = BN_dup(pkey_rsa->e);
             if ((rsa->n == NULL) || (rsa->e == NULL)) {
-                    NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
-                    goto rsa_done;
+                NSSerr(NSS_F_LOAD_KEY, NSS_R_INSUFFICIENT_MEMORY);
+                goto rsa_done;
             }
 
             if (EVP_PKEY_set1_RSA(pkey, rsa)) {
                 keyctx = RSA_get_ex_data(rsa, nss_rsa_ctx_index);
             }
-rsa_done:
+
+        rsa_done:
             RSA_free(rsa);
         }
 
@@ -131,12 +129,9 @@ rsa_done:
         DSA *pkey_dsa = EVP_PKEY_get1_DSA(pkey);
 
         if (ENGINE_get_DSA(e) == pkey_dsa->meth) {
-            DSA_free(pkey_dsa);
-            break;
-        }
-
-        /* if dsa method is not associated with this engine ... */
-        {
+            keyctx = DSA_get_ex_data(pkey_dsa, nss_dsa_ctx_index);
+        } else {
+            /* if dsa method is not associated with this engine ... */
             DSA *dsa = DSA_new_method(e);
 
             if (dsa == NULL) {
@@ -157,7 +152,8 @@ rsa_done:
             if (EVP_PKEY_set1_DSA(pkey, dsa)) {
                 keyctx = DSA_get_ex_data(dsa, nss_dsa_ctx_index);
             }
-dsa_done:
+
+        dsa_done:
             DSA_free(dsa);
         }
 
@@ -179,6 +175,8 @@ dsa_done:
     /* update XXX key context*/
     if (keyctx == NULL) {
         NSSerr(NSS_F_LOAD_KEY, NSS_R_MISSING_KEY_CONTEXT);
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
         goto done;
     }
 
