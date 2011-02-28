@@ -13,13 +13,11 @@ AM_INIT_AUTOMAKE([1.11 foreign dist-bzip2
 
 AC_CANONICAL_HOST
 
-LT_INIT([shared disable-static win32-dll])
-LT_LANG([Windows Resource])
-
-
 AC_PROG_CC
 AC_C_INLINE
 
+LT_INIT([shared disable-static win32-dll])
+LT_LANG([Windows Resource])
 
 AC_ARG_ENABLE([tests],
   [AS_HELP_STRING([--enable-tests],
