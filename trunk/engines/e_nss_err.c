@@ -15,7 +15,9 @@
 #define NSS_F_FINISH					 102
 #define NSS_F_CMD_CONFIG_DIR				 103
 #define NSS_F_CMD_LIST_CERT				 104
+#define NSS_F_CMD_EVP_CERT				 105
 #define NSS_F_LOAD_KEY					 110
+#define NSS_F_GET_CERT					 111
 #define NSS_F_RSA_INIT					 120
 #define NSS_F_RSA_FINISH				 121
 #define NSS_F_RSA_PRIV_DEC				 122

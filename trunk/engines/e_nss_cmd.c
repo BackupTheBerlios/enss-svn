@@ -118,40 +118,60 @@ done:
 }
 
 
+/*convert CERTCertificate to X509*/
+static X509*
+X509_from_CERTCertificate(const CERTCertificate *cert) {
+    X509 *x509 = NULL;
+    BIO *mbio;
+
+    mbio = BIO_new_mem_buf(cert->derCert.data, cert->derCert.len);
+    if (mbio == NULL) return(NULL);
+
+    x509 = d2i_X509_bio(mbio, NULL);
+
+    BIO_free(mbio);
+    return(x509);
+}
+
+
+static X509*
+nss_get_cert(NSS_CTX *ctx, const char *s) {
+    X509 *x509 = NULL;
+    CERTCertificate *cert = NULL;
+
+    CALL_TRACE("nss_get_cert...\n");
+
+    if (ctx == NULL) {
+        NSSerr(NSS_F_GET_CERT, NSS_R_INVALID_ARGUMENT);
+        goto done;
+    }
+    if (!NSS_IsInitialized()) {
+        NSSerr(NSS_F_GET_CERT, NSS_R_DB_IS_NOT_INITIALIZED);
+        goto done;
+    }
+
+    nss_debug(ctx, "search certificate '%s'", s);
+    cert = PK11_FindCertFromNickname(s, NULL);
+    nss_trace(ctx, "found certificate mem='%p'", cert);
+
+    if (cert == NULL) goto done;
+
+    x509 = X509_from_CERTCertificate(cert);
+
+done:
+    if (cert) CERT_DestroyCertificate(cert);
+
+    nss_debug(ctx, "certificate %s", (x509 ? "found": "not found"));
+    return(x509);
+}
+
+
 static int
 nss_cmd_print_cert(NSS_CTX *ctx, const char *s) {
     int ret = 0;
     X509 *x509 = NULL;
-    CERTCertificate *cert = NULL;
 
-    CALL_TRACE("nss_cmd_print_cert...\n");
-
-    if (ctx == NULL) {
-        NSSerr(NSS_F_CMD_LIST_CERT, NSS_R_INVALID_ARGUMENT);
-        goto done;
-    }
-    if (!NSS_IsInitialized()) {
-        NSSerr(NSS_F_CMD_LIST_CERT, NSS_R_DB_IS_NOT_INITIALIZED);
-        goto done;
-    }
-
-    nss_debug(ctx, "print_cert  search for '%s'", s);
-    cert = PK11_FindCertFromNickname(s, NULL);
-    nss_debug(ctx, "print_cert  found cert='%p'", cert);
-
-    if (cert == NULL) goto done;
-
-    {/*convert CERTCertificate to X509*/
-        BIO *mbio;
-
-        mbio = BIO_new_mem_buf(cert->derCert.data, cert->derCert.len);
-        if (mbio == NULL) goto done;
-
-        x509 = d2i_X509_bio(mbio, NULL);
-
-        BIO_free(mbio);
-    }
-
+    x509 = nss_get_cert(ctx, s);
     if (x509 == NULL) goto done;
 
     {/*print certificate*/
@@ -173,13 +193,56 @@ nss_cmd_print_cert(NSS_CTX *ctx, const char *s) {
 
     ret = 1;
 done:
-    if (cert) {
-        CERT_DestroyCertificate(cert);
-    }
-    if(x509) {
-        X509_free(x509);
-    }
+    if (x509) X509_free(x509);
     return(ret);
+}
+
+
+static int
+nss_cmd_load_cert(NSS_CTX *ctx, void *p) {
+    struct {
+        const char *nickname;
+        X509 *x509;
+    } *param = p;
+
+    param->x509 = nss_get_cert(ctx, param->nickname);
+
+    return(param->x509 ? 1 : 0);
+}
+
+
+static int
+nss_cmd_evp_cert(NSS_CTX *ctx, void *p) {
+    NSS_KEYCTX *keyctx = NULL;
+    struct {
+        EVP_PKEY *pkey;
+        X509 *x509;
+    } *param = p;
+
+    switch (param->pkey->type) {
+    case EVP_PKEY_RSA: {
+        RSA *pkey_rsa = EVP_PKEY_get1_RSA(param->pkey);
+        keyctx = RSA_get_ex_data(pkey_rsa, nss_rsa_ctx_index);
+        RSA_free(pkey_rsa);
+        } break;
+    case EVP_PKEY_DSA: {
+        DSA *pkey_dsa = EVP_PKEY_get1_DSA(param->pkey);
+        keyctx = DSA_get_ex_data(pkey_dsa, nss_dsa_ctx_index);
+        DSA_free(pkey_dsa);
+        } break;
+    default: {
+        NSSerr(NSS_F_CMD_EVP_CERT, NSS_R_UNSUPPORTED_KEYTYPE);
+        { /* add extra error message data */
+            char msgstr[10];
+            BIO_snprintf(msgstr, sizeof(msgstr), "%d", param->pkey->type);
+            ERR_add_error_data(2, "KEYTYPE=", msgstr);
+        }
+        } break;
+    }
+
+    param->x509 = X509_from_CERTCertificate(keyctx->cert);
+
+    return(param->x509 ? 1 : 0);
 }
 
 
@@ -198,6 +261,8 @@ done:
 
 #define E_NSS_CMD_LIST_CERTS     (E_NSS_CMD_USER+10)
 #define E_NSS_CMD_PRINT_CERT     (E_NSS_CMD_USER+11)
+#define E_NSS_CMD_LOAD_CERT      (E_NSS_CMD_USER+12)
+#define E_NSS_CMD_EVP_CERT       (E_NSS_CMD_USER+13)
 
 static const ENGINE_CMD_DEFN nss_cmd_defns[] = {
 #ifdef CMD_SO_PATH
@@ -226,6 +291,14 @@ static const ENGINE_CMD_DEFN nss_cmd_defns[] = {
      "PRINT_CERT",
      "Search and print certificate by specified nickname",
      ENGINE_CMD_FLAG_STRING},
+    {E_NSS_CMD_LOAD_CERT,
+     "LOAD_CERT_CTRL",
+     "Return certificate found by specified nickname",
+     ENGINE_CMD_FLAG_INTERNAL},
+    {E_NSS_CMD_EVP_CERT,
+     "LOAD_CERT_EVP",
+     "Return certificate for specified EVP KEY",
+     ENGINE_CMD_FLAG_INTERNAL},
     {0, NULL, NULL, 0}
 };
 
@@ -275,6 +348,12 @@ nss_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()) {
         } break;
     case E_NSS_CMD_PRINT_CERT: {
         ret = nss_cmd_print_cert(ctx, (char*) p);
+        } break;
+    case E_NSS_CMD_LOAD_CERT: {
+        ret = nss_cmd_load_cert(ctx, p);
+        } break;
+    case E_NSS_CMD_EVP_CERT: {
+        ret = nss_cmd_evp_cert(ctx, p);
         } break;
     default: {
         nss_trace(ctx, "nss_ctrl() <UNKNOWN=%d>\n", cmd);
