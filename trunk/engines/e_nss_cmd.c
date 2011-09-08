@@ -57,6 +57,10 @@ done:
 }
 
 
+static void
+BIO_printf_CERTName(BIO *out, CERTName *cn, const char *msg);
+
+
 static int
 nss_cmd_list_cert(NSS_CTX *ctx, long i) {
     int ret = 0;
@@ -107,6 +111,13 @@ softoken/secmodt.h:     PK11CertListAll = 6         /* get all instances of all 
 
         BIO_printf(out, "nickname='%s'\n"      , cert->nickname);
         BIO_printf(out, "  subject_name='%s'\n", cert->subjectName);
+        /* NOTE:
+         * - NSS cut long strings in cert->subjectName (?)
+         * - RFC 3280 : For UTF8String or UniversalString at least four
+         *   times the upper bound should be allowed.
+         * => lets perform own output
+         */
+        BIO_printf_CERTName(out, &cert->subject, "    ");
         BIO_printf(out, "  email_addr  ='%s'\n", cert->emailAddr);
     }
     CERT_DestroyCertList(list);
@@ -363,4 +374,57 @@ nss_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()) {
 
 done:
     return(ret);
+}
+
+
+/* helper functions */
+static void
+BIO_printf_CERTName(BIO *out, CERTName *cn, const char *msg) {
+    CERTRDN **rdns;
+
+    if (!cn) return;
+
+    rdns = cn->rdns;
+    if (!rdns) return;
+
+    for (; *rdns; rdns++) {
+        CERTAVA **avas = (*rdns)->avas;
+
+        if (!avas) continue;
+
+        for (; *avas; avas++) {
+            CERTAVA *ava = *avas;
+
+            BIO_printf(out, "%s", msg);
+
+            {
+                int tag = /*SECOidTag*/ CERT_GetAVATag(ava);
+                const char* code;
+
+                switch (tag) {
+                    case  -1: code = "<unknown>"; break;
+                    case  31: code = "E"; break;
+                    case  41: code = "CN"; break;
+                    case  42: code = "C"; break;
+                    case  43: code = "L"; break;
+                    case  44: code = "ST"; break;
+                    case  45: code = "O"; break;
+                    case  46: code = "OU"; break;
+                    case 261: code = "SN"; break;
+                    case 262: code = "serialNumber"; break;
+                    case 268: code = "givenName"; break;
+                    default:  code = "<?>"; break;
+                }
+
+                BIO_printf(out, "%s = ", code);
+            }
+            {
+                SECItem *si_utf8;
+
+                si_utf8 = CERT_DecodeAVAValue(&ava->value);
+                BIO_printf(out, "'%.*s'\n", si_utf8->len, si_utf8->data);
+                SECITEM_FreeItem(si_utf8, PR_TRUE);
+             }
+        }
+    }
 }
