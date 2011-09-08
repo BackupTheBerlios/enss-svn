@@ -334,6 +334,16 @@ bind_nss(ENGINE *e) {
 
     if (!ENGINE_set_id(e, nss_engine_id)
     ||  !ENGINE_set_name(e, nss_engine_name)
+#ifdef ENGINE_FLAGS_NO_REGISTER_ALL
+/* From openssl(1.0.1)/crypto/engine/engine.h:
+ * This flag if for an ENGINE that does not want its methods registered as
+ * part of ENGINE_register_all_complete() for example if the methods are
+ * not usable as default methods.
+ */
+/* TODO: to test with and without flag
+    || !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL)
+*/
+#endif
     ||  !ENGINE_set_cmd_defns(e, nss_cmd_defns)
     ||  !ENGINE_set_ctrl_function(e, nss_ctrl)
     ||  !ENGINE_set_init_function(e, nss_init)
